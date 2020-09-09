@@ -9,6 +9,7 @@ import { getJobs, updateJob } from '@utils/airtable/requests';
 import { Status } from '../StatusScreen/StatusScreen';
 import ContactsModal from '@components/ContactsModal/ContactsModal';
 import { StatusController } from '@screens/StatusScreen/StatusController';
+import { useState } from 'react';
 
 // BWBP
 import { Overlay, CheckBox, Button } from 'react-native-elements';
@@ -106,9 +107,43 @@ export class JobsScreen extends React.Component<JobsScreenProps, JobsScreenState
     console.log(newJobs, availability);
 
     // Step 1: Remove jobs where the schedule doesn't align with the users' availability.
+    
+    const available = [];
+    if (availability.monday) {
+      available.push("Monday");
+    } 
+    if (availability.tuesday) {
+      available.push("Tuesday");
+    } 
+    if (availability.wednesday) {
+      available.push("Wednesday");
+    } 
+    if (availability.thursday) {
+      available.push("Thursday");
+    } 
+    if (availability.friday) {
+      available.push("Friday");
+    } 
+
+    const newNewJobs = [];
+    for (var i = 0; i < newJobs.length; i++) {
+      let job = newJobs[i];
+      const newSchedule = [];
+      var open = false;
+      for (var j = 0; j < available.length; j++) {
+        if (job.schedule.includes(available[j])) {
+          open = true;
+          newSchedule.push(available[j]);
+        }
+      }
+      job.schedule = newSchedule;
+      if (open) {
+        newNewJobs.push(job);
+      }
+    }
 
     // Step 2: Save into state
-    this.setState({ jobs: newJobs });
+    this.setState({ jobs: newNewJobs });
   };
 
   getStatus = (jobs: JobRecord[]): Status => {
@@ -131,6 +166,13 @@ export class JobsScreen extends React.Component<JobsScreenProps, JobsScreenState
 
   render() {
     const { monday, tuesday, wednesday, thursday, friday } = this.state.availability;
+
+    let visible = false;
+
+    const toggleOverlay = () => {
+      visible = !visible;
+    };
+
     return (
       <BaseScreen
         title={this.state.title}
@@ -197,7 +239,8 @@ export class JobsScreen extends React.Component<JobsScreenProps, JobsScreenState
             title="Filter Search"
             containerStyle={{ width: '50%' }}
             onPress={(): void => {
-              this.filterJobs(getJobs(), this.state.availability);
+              this.filterJobs(getJobs(), this.state.availability); 
+              toggleOverlay();
             }}
           />
         </View>
